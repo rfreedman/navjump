@@ -3,13 +3,17 @@ package net.greybeardedgeek.activities;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.LoaderManager;
+import android.content.ActivityNotFoundException;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -20,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -27,13 +32,14 @@ import android.widget.Toast;
 
 import net.greybeardedgeek.R;
 import net.greybeardedgeek.database.LocationProvider.Locations;
+import net.greybeardedgeek.fragments.AddLocationDialogFragment;
 
 public class MainActivity extends Activity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String TAG = "MainActivity";
 
-    ListView locationList;
-    CursorAdapter locationAdapter;
+    private ListView locationList;
+    private CursorAdapter locationAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,8 +73,7 @@ public class MainActivity extends Activity implements LoaderManager.LoaderCallba
 
     private void handleItemClick(View view) {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
-        String name = viewHolder.nameView.getText().toString();
-        Toast.makeText(this, "nav to " + name, Toast.LENGTH_SHORT).show();
+        navigate(viewHolder);
     }
 
     public boolean onContextItemSelected(MenuItem item) {
@@ -79,7 +84,7 @@ public class MainActivity extends Activity implements LoaderManager.LoaderCallba
 
         switch (item.getItemId()) {
             case R.id.action_nav:
-                Log.d(TAG, "context menu nav - menuInfo id = " + info.id + " viewHolder id = " + viewHolder.id);
+                navigate(viewHolder);
                 return true;
 
             case R.id.action_delete:
@@ -91,6 +96,52 @@ public class MainActivity extends Activity implements LoaderManager.LoaderCallba
         }
     }
 
+
+    private void navigate(ViewHolder viewHolder){
+        double latitude = 0.0;
+        double longitude = 0.0;
+
+        try {
+            if(viewHolder.latString != null) {
+                latitude = Double.parseDouble(viewHolder.latString);
+            }
+
+            if(viewHolder.longString != null) {
+                longitude = Double.parseDouble(viewHolder.longString);
+            }
+
+        } catch (NumberFormatException ex) {
+        //
+        }
+
+        if(latitude != 0.0 && longitude != 0.0) {
+            navigate(latitude, longitude);
+        } else {
+            navigate(viewHolder.address);
+        }
+    }
+
+    private void navigate(String address) {
+        try {
+            Uri uri = Uri.parse("google.navigation:q=" + address.replaceAll(" ", "+"));
+            Log.d("nav", "navigating using uri: " + uri);
+            Intent intent = new Intent(android.content.Intent.ACTION_VIEW, uri);
+            startActivity(intent);
+        } catch(ActivityNotFoundException ex) {
+            Toast.makeText(this, "Google Navigation Application Not Found", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void navigate(double latitude, double longitude) {
+        try {
+            Uri uri = Uri.parse("google.navigation:ll=" + latitude + "," + longitude);
+            Log.d("nav", "navigating using uri: " + uri);
+            Intent intent = new Intent(android.content.Intent.ACTION_VIEW, uri);
+            startActivity(intent);
+        } catch(ActivityNotFoundException ex) {
+            Toast.makeText(this, "Google Navigation Application Not Found", Toast.LENGTH_LONG).show();
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -106,7 +157,7 @@ public class MainActivity extends Activity implements LoaderManager.LoaderCallba
 
         switch(item.getItemId()) {
             case R.id.action_add_location:
-                addBogusLocation();
+                showAddDialog();
                 handled = true;
                 break;
 
@@ -118,12 +169,8 @@ public class MainActivity extends Activity implements LoaderManager.LoaderCallba
         return handled;
     }
 
-    static int locationNumber = 0;
-
-    private void addBogusLocation() {
-        ContentValues values = new ContentValues();
-        values.put(Locations.NAME, "Location " + locationNumber++);
-        getContentResolver().insert(Locations.CONTENT_URI, values);
+    private void showAddDialog() {
+        AddLocationDialogFragment.newInstance().show(getFragmentManager(), "addDialog");
     }
 
     private void deleteLocation(long locationId) {
@@ -182,21 +229,64 @@ public class MainActivity extends Activity implements LoaderManager.LoaderCallba
             View view = LayoutInflater.from(context).inflate(R.layout.list_item_location, null);
             ViewHolder viewHolder = new ViewHolder();
             viewHolder.nameView = (TextView) view.findViewById(R.id.location_name);
+            viewHolder.addressView = (TextView) view.findViewById(R.id.address);
+            viewHolder.latlongView = (TextView) view.findViewById(R.id.latlong);
+            viewHolder.favoriteView = (CheckBox) view.findViewById(R.id.star);
             view.setTag(viewHolder);
             return view;
         }
 
         @Override
-        public void bindView(View view, Context context, Cursor cursor) {
+        public void bindView(View view, final Context context, Cursor cursor) {
             ViewHolder viewHolder = (ViewHolder) view.getTag();
-            viewHolder.nameView.setText(cursor.getString(cursor.getColumnIndex(Locations.NAME)));
             viewHolder.id = cursor.getInt(cursor.getColumnIndex(Locations.ID));
+            viewHolder.nameView.setText(cursor.getString(cursor.getColumnIndex(Locations.NAME)));
+
+            viewHolder.address = cursor.getString(cursor.getColumnIndex(Locations.ADDRESS));
+            viewHolder.latString = cursor.getString(cursor.getColumnIndex(Locations.LATITUDE));
+            viewHolder.longString = cursor.getString(cursor.getColumnIndex(Locations.LONGITUDE));
+
+            if(viewHolder.address != null && !viewHolder.address.isEmpty()) {
+                viewHolder.addressView.setText(viewHolder.address);
+                viewHolder.addressView.setVisibility(View.VISIBLE);
+            } else {
+                viewHolder.addressView.setText("");
+                viewHolder.addressView.setVisibility(View.GONE);
+            }
+
+            if(viewHolder.latString != null && !viewHolder.latString.isEmpty() && viewHolder.longString != null && !viewHolder.longString.isEmpty()) {
+                viewHolder.latlongView.setText("(" + viewHolder.latString + ", " + viewHolder.longString + ")");
+                viewHolder.latlongView.setVisibility(View.VISIBLE);
+            } else {
+                viewHolder.latlongView.setText("");
+                viewHolder.latlongView.setVisibility(View.GONE);
+            }
+
+            viewHolder.favoriteView.setChecked(cursor.getInt(cursor.getColumnIndex(Locations.IS_FAVORITE)) != 0);
+            viewHolder.favoriteView.setTag(new Integer(viewHolder.id));
+            viewHolder.favoriteView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    CheckBox checkBox = (CheckBox) view;
+                    int id = ((Integer) checkBox.getTag()).intValue();
+                    ContentValues values = new ContentValues();
+                    values.put(Locations.IS_FAVORITE, checkBox.isChecked());
+                    context.getContentResolver().update(ContentUris.withAppendedId(Locations.CONTENT_URI, id), values, null, null);
+                }
+            });
         }
     }
 
     private static class ViewHolder {
         public int id;
         public TextView nameView;
+        public TextView addressView;
+        public TextView latlongView;
+        public CheckBox favoriteView;
+
+        public String address;
+        public String latString;
+        public String longString;
     }
 
     private void deleteOnConfirm(final long locationId, final String locationName) {
@@ -208,10 +298,12 @@ public class MainActivity extends Activity implements LoaderManager.LoaderCallba
         dialog.setButton(DialogInterface.BUTTON_POSITIVE, "Ok", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int buttonId) {
                 deleteLocation(locationId);
+                dialog.dismiss();
             }
         });
         dialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int buttonId) {
+                dialog.dismiss();
             }
         });
         dialog.setIcon(android.R.drawable.ic_dialog_alert);

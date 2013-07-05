@@ -1,13 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="horizontal"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content">
-
-    <TextView android:id="@+id/location_name"
-        android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="12dp"
+    android:background="@drawable/list_item_shape"
+>
+    <LinearLayout android:id="@+id/info"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-    />
+        android:layout_toLeftOf="@+id/star"
+    >
+        <TextView android:id="@+id/location_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location Name"
+        />
+
+        <TextView android:id="@+id/address"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="123 Main St. Anytown ZZ"
+        />
+        <TextView android:id="@+id/latlong"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="40.1234, -123.0000"
+        />
+    </LinearLayout>
+    <CheckBox
+        android:id="@+id/star"
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:visibility="visible"
+        style="?android:attr/starStyle"
+        android:focusable="false"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+     />
 </RelativeLayout>
