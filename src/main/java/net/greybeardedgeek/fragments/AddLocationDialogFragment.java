@@ -156,8 +156,14 @@ public class AddLocationDialogFragment extends DialogFragment implements Locatio
 
         ContentValues locationValues = new ContentValues();
         locationValues.put(Locations.NAME, nameView.getText().toString());
-        locationValues.put(Locations.LATITUDE, latitudeView.getText().toString());
-        locationValues.put(Locations.LONGITUDE, longitudeView.getText().toString());
+
+        String latitude = latitudeView.getText().toString();
+        String longitude = longitudeView.getText().toString();
+        //if(hasData(latitude) && hasData(longitude)) {
+            locationValues.put(Locations.LATITUDE, latitude);
+            locationValues.put(Locations.LONGITUDE, longitude);
+        //}
+
         locationValues.put(Locations.IS_FAVORITE, false);
         locationValues.put(Locations.LAST_USED, new Date().getTime());
 
@@ -191,20 +197,23 @@ public class AddLocationDialogFragment extends DialogFragment implements Locatio
                 }
             }
 
-            try {
+            if(hasData(contentValues, Locations.LATITUDE) || hasData(contentValues, Locations.LONGITUDE)) {
+                try {
 
-                String latitude = contentValues.getAsString(Locations.LATITUDE);
-                String longitude = contentValues.getAsString(Locations.LONGITUDE);
+                    String latitude = contentValues.getAsString(Locations.LATITUDE);
+                    String longitude = contentValues.getAsString(Locations.LONGITUDE);
 
-                if(latitude != null) {
-                    Double.parseDouble(latitude);
+                    //if(latitude != null) {
+                        Double.parseDouble(latitude);
+                    //}
+
+                    //if(longitude != null){
+                        Double.parseDouble(longitude);
+                    //}
+                } catch (NumberFormatException ex) {
+                    errorMsg = "Lat and Long must be numeric";
+                    break;
                 }
-
-                if(longitude != null){
-                    Double.parseDouble(longitude);
-                }
-            } catch (NumberFormatException ex) {
-                errorMsg = "Lat and Long must be numeric";
             }
 
 
@@ -220,6 +229,10 @@ public class AddLocationDialogFragment extends DialogFragment implements Locatio
 
     private boolean hasData(ContentValues values, String key) {
         String value = values.getAsString(key);
+        return hasData(value);
+    }
+
+    private boolean hasData(String value) {
         return value != null && !value.isEmpty();
     }
 
