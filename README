@@ -1,1 +1,42 @@
 An address book for Google Navigation.
+
+The motiviation for this app was my dissatisfaction with the way that Google Navigation handles addresses 
+- it only offers 'recent' locations. 
+
+Most other 'navigation address books' assume that you want to use contacts from your contact list for navigation.
+
+I wanted a stand-alone place to keep addresses that I navigate to, without having them tied to 'contacts'.
+
+The features of this app include:
+
+* Enter address directly, or add latitude / longitude coordinates directly, or use your current location.
+
+* Filter addresses by 'favorites', or by recently used
+
+* Set the threshold (in number of days) for addresses to be considered recently used (default is 7 days).
+
+
+This software is released under the BSD License, which allows you to do pretty much whatever you wish with it,
+as long you provide proper attribution:
+
+
+Copyright (c) 2013, Richard Freedman
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted 
+provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, 
+this list of conditions and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notice, 
+this list of conditions and the following disclaimer in the documentation 
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
