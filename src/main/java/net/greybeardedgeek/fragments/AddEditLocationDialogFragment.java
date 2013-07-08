@@ -3,6 +3,7 @@ package net.greybeardedgeek.fragments;
 import android.app.DialogFragment;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -13,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import net.greybeardedgeek.R;
@@ -22,7 +24,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class AddLocationDialogFragment extends DialogFragment implements LocationListener {
+public class AddEditLocationDialogFragment extends DialogFragment implements LocationListener {
 
     private EditText nameView;
     private EditText addressView;
@@ -32,15 +34,19 @@ public class AddLocationDialogFragment extends DialogFragment implements Locatio
     private double lastLatitude;
     private double lastLongitude;
 
-    public static AddLocationDialogFragment newInstance() {
-        AddLocationDialogFragment fragment = new AddLocationDialogFragment();
+    private long editItemId = -1L;
 
-        /*
-        // Supply num input as an argument.
+    public static AddEditLocationDialogFragment newInstance() {
+        AddEditLocationDialogFragment fragment = new AddEditLocationDialogFragment();
+        return fragment;
+    }
+
+    public static AddEditLocationDialogFragment newInstance(long itemId) {
+        AddEditLocationDialogFragment fragment = new AddEditLocationDialogFragment();
+
         Bundle args = new Bundle();
-        args.putInt("num", num);
+        args.putLong("itemId", itemId);
         fragment.setArguments(args);
-        */
 
         return fragment;
     }
@@ -48,14 +54,17 @@ public class AddLocationDialogFragment extends DialogFragment implements Locatio
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //mNum = getArguments().getInt("num");
+
+        Bundle args = getArguments();
+        if(args != null && args.containsKey("itemId")) {
+            editItemId = args.getLong("itemId");
+        }
     }
 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.add_location_dialog, container, false);
-        getDialog().setTitle("Add Location");
 
         nameView = (EditText) view.findViewById(R.id.name);
         addressView = (EditText) view.findViewById(R.id.address);
@@ -77,7 +86,11 @@ public class AddLocationDialogFragment extends DialogFragment implements Locatio
 
         view.findViewById(R.id.positiveButton).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                addLocation();
+                if(editItemId > -1) {
+                    updateLocation();
+                } else {
+                    addLocation();
+                }
             }
         });
 
@@ -87,12 +100,23 @@ public class AddLocationDialogFragment extends DialogFragment implements Locatio
             }
         });
 
+        if(editItemId > -1) {
+            getDialog().setTitle("Update Location");
+            ((TextView)view.findViewById(R.id.positiveButton)).setText("Update");
+            populateItem();
+        } else {
+            getDialog().setTitle("Add Location");
+            ((TextView)view.findViewById(R.id.positiveButton)).setText("Add");
+
+        }
+
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
+
         LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
 
         try {
@@ -152,18 +176,54 @@ public class AddLocationDialogFragment extends DialogFragment implements Locatio
         return address;
     }
 
+
+    private void populateItem() {
+
+        String[] projection = null;
+        String selection = Locations.ID + " = ?";
+        String idString = Long.toString(editItemId);
+        String[] selectionArgs = {idString};
+        String sort =  Locations.ID + " asc";
+
+        Cursor cursor = getActivity().getContentResolver().query(Locations.CONTENT_URI, projection, selection, selectionArgs, sort);
+        if(cursor != null && cursor.moveToFirst()) {
+            nameView.setText(cursor.getString(cursor.getColumnIndex(Locations.NAME)));
+            addressView.setText(cursor.getString(cursor.getColumnIndex(Locations.ADDRESS)));
+            latitudeView.setText(cursor.getString(cursor.getColumnIndex(Locations.LATITUDE)));
+            longitudeView.setText(cursor.getString(cursor.getColumnIndex(Locations.LONGITUDE)));
+        }
+    }
+
+    private void updateLocation() {
+        ContentValues locationValues = new ContentValues();
+        locationValues.put(Locations.NAME, nameView.getText().toString());
+        locationValues.put(Locations.LATITUDE, latitudeView.getText().toString());
+        locationValues.put(Locations.LONGITUDE, longitudeView.getText().toString());
+
+        String addressString = addressView.getText().toString();
+        if(addressString == null || addressString.isEmpty()) {
+            addressString = getAddress(latitudeView.getText().toString(), longitudeView.getText().toString());
+        }
+
+        locationValues.put(Locations.ADDRESS, addressString);
+
+        if(validateLocation(locationValues)) {
+
+            String idString = Long.toString(editItemId);
+            String where = Locations.ID + " = ?";
+            String[] selectionArgs = {idString};
+
+            getActivity().getContentResolver().update(Locations.CONTENT_URI, locationValues, where, selectionArgs);
+            dismiss();
+        }
+    }
+
     private void addLocation() {
 
         ContentValues locationValues = new ContentValues();
         locationValues.put(Locations.NAME, nameView.getText().toString());
-
-        String latitude = latitudeView.getText().toString();
-        String longitude = longitudeView.getText().toString();
-        //if(hasData(latitude) && hasData(longitude)) {
-            locationValues.put(Locations.LATITUDE, latitude);
-            locationValues.put(Locations.LONGITUDE, longitude);
-        //}
-
+        locationValues.put(Locations.LATITUDE, latitudeView.getText().toString());
+        locationValues.put(Locations.LONGITUDE, longitudeView.getText().toString());
         locationValues.put(Locations.IS_FAVORITE, false);
         locationValues.put(Locations.LAST_USED, new Date().getTime());
 
@@ -199,17 +259,8 @@ public class AddLocationDialogFragment extends DialogFragment implements Locatio
 
             if(hasData(contentValues, Locations.LATITUDE) || hasData(contentValues, Locations.LONGITUDE)) {
                 try {
-
-                    String latitude = contentValues.getAsString(Locations.LATITUDE);
-                    String longitude = contentValues.getAsString(Locations.LONGITUDE);
-
-                    //if(latitude != null) {
-                        Double.parseDouble(latitude);
-                    //}
-
-                    //if(longitude != null){
-                        Double.parseDouble(longitude);
-                    //}
+                    Double.parseDouble(contentValues.getAsString(Locations.LATITUDE));
+                    Double.parseDouble(contentValues.getAsString(Locations.LONGITUDE));
                 } catch (NumberFormatException ex) {
                     errorMsg = "Lat and Long must be numeric";
                     break;

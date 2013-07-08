@@ -1,168 +1,73 @@
 package net.greybeardedgeek.activities;
 
+import android.app.ActionBar;
+import android.app.ActionBar.Tab;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.LoaderManager;
-import android.content.ActivityNotFoundException;
-import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.CursorLoader;
-import android.content.DialogInterface;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Intent;
-import android.content.Loader;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.ContextMenu;
-import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.CheckBox;
-import android.widget.CursorAdapter;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import net.greybeardedgeek.R;
-import net.greybeardedgeek.database.LocationProvider.Locations;
-import net.greybeardedgeek.fragments.AddLocationDialogFragment;
+import net.greybeardedgeek.fragments.AddEditLocationDialogFragment;
+import net.greybeardedgeek.fragments.LocationsFragment;
 
-public class MainActivity extends Activity implements LoaderManager.LoaderCallbacks<Cursor> {
-
-    private static final String TAG = "MainActivity";
-
-    private ListView locationList;
-    private CursorAdapter locationAdapter;
+public class MainActivity extends Activity {
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        locationList = (ListView) findViewById(R.id.location_list);
-        locationAdapter = new LocationAdapter(this);
-        locationList.setAdapter(locationAdapter);
+        // Notice that setContentView() is not used, because we use the root
+        // android.R.id.content as the container for each fragment
 
-        locationList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                handleItemClick(view);
-            }
-        });
+        // setup action bar for tabs
+        ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 
-        registerForContextMenu(locationList);
-
-        getLoaderManager().initLoader(0, null, this);
-
-        Log.d(TAG, "onCreate");
-    }
-
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.location_context_menu, menu);
-    }
-
-    private void handleItemClick(View view) {
-        ViewHolder viewHolder = (ViewHolder) view.getTag();
-        navigate(viewHolder);
-    }
-
-    public boolean onContextItemSelected(MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-
-        View targetView = info.targetView;
-        ViewHolder viewHolder = (ViewHolder) targetView.getTag();
-
-        switch (item.getItemId()) {
-            case R.id.action_nav:
-                navigate(viewHolder);
-                return true;
-
-            case R.id.action_delete:
-                deleteOnConfirm(info.id,viewHolder.nameView.getText().toString());
-                return true;
-
-            default:
-                return super.onContextItemSelected(item);
-        }
-    }
+        Tab tab = actionBar.newTab()
+                .setText("Favorites")
+                .setTabListener(new TabListener<LocationsFragment>(this, LocationsFragment.Filter.favorites.name(), LocationsFragment.class));
+        actionBar.addTab(tab);
 
 
-    private void navigate(ViewHolder viewHolder){
-        double latitude = 0.0;
-        double longitude = 0.0;
+        tab = actionBar.newTab()
+                .setText("Recent")
+                .setTabListener(new TabListener<LocationsFragment>(this, LocationsFragment.Filter.recent.name(), LocationsFragment.class));
+        actionBar.addTab(tab);
 
-        try {
-            if(viewHolder.latString != null) {
-                latitude = Double.parseDouble(viewHolder.latString);
-            }
 
-            if(viewHolder.longString != null) {
-                longitude = Double.parseDouble(viewHolder.longString);
-            }
-
-        } catch (NumberFormatException ex) {
-        //
-        }
-
-        if(latitude != 0.0 && longitude != 0.0) {
-            navigate(latitude, longitude);
-        } else {
-            navigate(viewHolder.address);
-        }
-    }
-
-    private void navigate(String address) {
-        try {
-            Uri uri = Uri.parse("google.navigation:q=" + address.replaceAll(" ", "+"));
-            Log.d("nav", "navigating using uri: " + uri);
-            Intent intent = new Intent(android.content.Intent.ACTION_VIEW, uri);
-            startActivity(intent);
-        } catch(ActivityNotFoundException ex) {
-            Toast.makeText(this, "Google Navigation Application Not Found", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private void navigate(double latitude, double longitude) {
-        try {
-            Uri uri = Uri.parse("google.navigation:ll=" + latitude + "," + longitude);
-            Log.d("nav", "navigating using uri: " + uri);
-            Intent intent = new Intent(android.content.Intent.ACTION_VIEW, uri);
-            startActivity(intent);
-        } catch(ActivityNotFoundException ex) {
-            Toast.makeText(this, "Google Navigation Application Not Found", Toast.LENGTH_LONG).show();
-        }
+        tab = actionBar.newTab()
+                .setText("All")
+                .setTabListener(new TabListener<LocationsFragment>(this, LocationsFragment.Filter.all.name(), LocationsFragment.class));
+        actionBar.addTab(tab);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-    	getMenuInflater().inflate(net.greybeardedgeek.R.menu.main, menu);
-	    return true;
+        getMenuInflater().inflate(net.greybeardedgeek.R.menu.main, menu);
+        return true;
     }
-
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         boolean handled = false;
 
-        switch(item.getItemId()) {
+        switch (item.getItemId()) {
             case R.id.action_add_location:
                 showAddDialog();
                 handled = true;
                 break;
 
+            case R.id.action_settings:
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+                break;
+
             default:
-                handled =  super.onOptionsItemSelected(item);
+                handled = super.onOptionsItemSelected(item);
                 break;
         }
 
@@ -170,144 +75,41 @@ public class MainActivity extends Activity implements LoaderManager.LoaderCallba
     }
 
     private void showAddDialog() {
-        AddLocationDialogFragment.newInstance().show(getFragmentManager(), "addDialog");
+        AddEditLocationDialogFragment.newInstance().show(getFragmentManager(), "addDialog");
     }
 
-    private void deleteLocation(long locationId) {
-        getContentResolver().delete(ContentUris.withAppendedId(Locations.CONTENT_URI, locationId), null, null);
-    }
+    public static class TabListener<T extends Fragment> implements ActionBar.TabListener {
+        private final Activity mActivity;
+        private final String mTag;
+        private final Class<T> mClass;
+        private Fragment mFragment;
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-
-        Log.d(TAG, "onCreateLoader");
-
-        // TODO - this is ALL - implement favorites and recents
-
-        String selectionCritera = null;
-        String[] selectionArgs = null;
-
-        CursorLoader loader =  new CursorLoader(
-                this,
-                Locations.CONTENT_URI,
-                null, // projection
-                selectionCritera, // selection
-                selectionArgs, // selection parameters
-                Locations.NAME + " asc " // sort
-        );
-
-        return loader;
-    }
-
-    public void onLoadFinished(Loader<Cursor> loader, final Cursor cursor) {
-        locationAdapter.swapCursor(cursor);
-
-        if(cursor == null) {
-            Log.d(TAG, "onLoadFinished - cursor is null");
-        } else {
-            Log.d(TAG, "onLoadFinished - cursor count: " + cursor.getCount());
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        locationAdapter.swapCursor(null);
-    }
-
-    private static class LocationAdapter extends CursorAdapter {
-
-        public LocationAdapter(Context context) {
-            super(context, null, 0);
+        public TabListener(Activity activity, String tag, Class<T> clz) {
+            mActivity = activity;
+            mTag = tag;
+            mClass = clz;
         }
 
-        public LocationAdapter(Context context, Cursor cursor) {
-            super(context, cursor, 0);
-        }
+        public void onTabSelected(Tab tab, FragmentTransaction ft) {
 
-        @Override
-        public View newView(Context context, Cursor cursor, ViewGroup viewGroup) {
-            View view = LayoutInflater.from(context).inflate(R.layout.list_item_location, null);
-            ViewHolder viewHolder = new ViewHolder();
-            viewHolder.nameView = (TextView) view.findViewById(R.id.location_name);
-            viewHolder.addressView = (TextView) view.findViewById(R.id.address);
-            viewHolder.latlongView = (TextView) view.findViewById(R.id.latlong);
-            viewHolder.favoriteView = (CheckBox) view.findViewById(R.id.star);
-            view.setTag(viewHolder);
-            return view;
-        }
-
-        @Override
-        public void bindView(View view, final Context context, Cursor cursor) {
-            ViewHolder viewHolder = (ViewHolder) view.getTag();
-            viewHolder.id = cursor.getInt(cursor.getColumnIndex(Locations.ID));
-            viewHolder.nameView.setText(cursor.getString(cursor.getColumnIndex(Locations.NAME)));
-
-            viewHolder.address = cursor.getString(cursor.getColumnIndex(Locations.ADDRESS));
-            viewHolder.latString = cursor.getString(cursor.getColumnIndex(Locations.LATITUDE));
-            viewHolder.longString = cursor.getString(cursor.getColumnIndex(Locations.LONGITUDE));
-
-            if(viewHolder.address != null && !viewHolder.address.isEmpty()) {
-                viewHolder.addressView.setText(viewHolder.address);
-                viewHolder.addressView.setVisibility(View.VISIBLE);
+            if (mFragment == null) {
+                Bundle bundle = new Bundle();
+                bundle.putString("filter", mTag);
+                mFragment = Fragment.instantiate(mActivity, mClass.getName(), bundle);
+                ft.add(android.R.id.content, mFragment, mTag);
             } else {
-                viewHolder.addressView.setText("");
-                viewHolder.addressView.setVisibility(View.GONE);
+                ft.attach(mFragment);
             }
-
-            if(viewHolder.latString != null && !viewHolder.latString.isEmpty() && viewHolder.longString != null && !viewHolder.longString.isEmpty()) {
-                viewHolder.latlongView.setText("(" + viewHolder.latString + ", " + viewHolder.longString + ")");
-                viewHolder.latlongView.setVisibility(View.VISIBLE);
-            } else {
-                viewHolder.latlongView.setText("");
-                viewHolder.latlongView.setVisibility(View.GONE);
-            }
-
-            viewHolder.favoriteView.setChecked(cursor.getInt(cursor.getColumnIndex(Locations.IS_FAVORITE)) != 0);
-            viewHolder.favoriteView.setTag(new Integer(viewHolder.id));
-            viewHolder.favoriteView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    CheckBox checkBox = (CheckBox) view;
-                    int id = ((Integer) checkBox.getTag()).intValue();
-                    ContentValues values = new ContentValues();
-                    values.put(Locations.IS_FAVORITE, checkBox.isChecked());
-                    context.getContentResolver().update(ContentUris.withAppendedId(Locations.CONTENT_URI, id), values, null, null);
-                }
-            });
         }
-    }
 
-    private static class ViewHolder {
-        public int id;
-        public TextView nameView;
-        public TextView addressView;
-        public TextView latlongView;
-        public CheckBox favoriteView;
-
-        public String address;
-        public String latString;
-        public String longString;
-    }
-
-    private void deleteOnConfirm(final long locationId, final String locationName) {
-
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.setTitle("Delete Location");
-        dialog.setMessage("Delete " + locationName + "?");
-        dialog.setCancelable(false);
-        dialog.setButton(DialogInterface.BUTTON_POSITIVE, "Ok", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int buttonId) {
-                deleteLocation(locationId);
-                dialog.dismiss();
+        public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+            if (mFragment != null) {
+                ft.detach(mFragment);
             }
-        });
-        dialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int buttonId) {
-                dialog.dismiss();
-            }
-        });
-        dialog.setIcon(android.R.drawable.ic_dialog_alert);
-        dialog.show();
+
+        }
+
+        public void onTabReselected(Tab tab, FragmentTransaction ft) {
+        }
     }
 }
-

@@ -6,28 +6,35 @@
     android:layout_height="wrap_content"
     android:padding="12dp"
     android:background="@drawable/list_item_shape"
+    android:gravity="left"
 >
     <LinearLayout android:id="@+id/info"
         android:orientation="vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_toLeftOf="@+id/star"
+        android:layout_gravity="left"
     >
         <TextView android:id="@+id/location_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Location Name"
+            android:text="fred"
+            android:layout_gravity="left"
         />
 
         <TextView android:id="@+id/address"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
-              android:text="123 Main St. Anytown ZZ"
+              android:text="123 fred st."
+              android:layout_gravity="left"
         />
+
         <TextView android:id="@+id/latlong"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:text="40.1234, -123.0000"
+              android:layout_gravity="left"
+              android:visibility="gone"
         />
     </LinearLayout>
     <CheckBox

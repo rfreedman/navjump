@@ -1,26 +1,4 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-
-    <item
-        android:id="@+id/action_favorites"
-        android:orderInCategory="10"
-        android:showAsAction="always"
-        android:title="@string/action_list_favorites"
-    />
-
-    <item
-        android:id="@+id/action_recent"
-        android:orderInCategory="20"
-        android:showAsAction="always"
-        android:title="@string/action_list_recents"
-    />
-
-    <item
-        android:id="@+id/action_list_all"
-        android:orderInCategory="30"
-        android:showAsAction="always"
-        android:title="@string/action_list_all"
-    />
-
     <item
         android:id="@+id/action_add_location"
         android:orderInCategory="100"
