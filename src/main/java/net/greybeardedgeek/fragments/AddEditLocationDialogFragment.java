@@ -192,6 +192,7 @@ public class AddEditLocationDialogFragment extends DialogFragment implements Loc
             latitudeView.setText(cursor.getString(cursor.getColumnIndex(Locations.LATITUDE)));
             longitudeView.setText(cursor.getString(cursor.getColumnIndex(Locations.LONGITUDE)));
         }
+        cursor.close();
     }
 
     private void updateLocation() {

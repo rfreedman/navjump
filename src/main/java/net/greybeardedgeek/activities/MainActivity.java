@@ -13,8 +13,10 @@ import android.view.MenuItem;
 import net.greybeardedgeek.R;
 import net.greybeardedgeek.fragments.AddEditLocationDialogFragment;
 import net.greybeardedgeek.fragments.LocationsFragment;
+import net.greybeardedgeek.fragments.LocationsFragment.Filter;
 
 public class MainActivity extends Activity {
+    private ActionBar actionBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,26 +25,12 @@ public class MainActivity extends Activity {
         // Notice that setContentView() is not used, because we use the root
         // android.R.id.content as the container for each fragment
 
-        // setup action bar for tabs
-        ActionBar actionBar = getActionBar();
+        actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 
-        Tab tab = actionBar.newTab()
-                .setText("Favorites")
-                .setTabListener(new TabListener<LocationsFragment>(this, LocationsFragment.Filter.favorites.name(), LocationsFragment.class));
-        actionBar.addTab(tab);
-
-
-        tab = actionBar.newTab()
-                .setText("Recent")
-                .setTabListener(new TabListener<LocationsFragment>(this, LocationsFragment.Filter.recent.name(), LocationsFragment.class));
-        actionBar.addTab(tab);
-
-
-        tab = actionBar.newTab()
-                .setText("All")
-                .setTabListener(new TabListener<LocationsFragment>(this, LocationsFragment.Filter.all.name(), LocationsFragment.class));
-        actionBar.addTab(tab);
+        actionBar.addTab(createTab("Favorites", Filter.favorites));
+        actionBar.addTab(createTab("Recent", Filter.recent));
+        actionBar.addTab(createTab("All", Filter.all));
     }
 
     @Override
@@ -78,38 +66,44 @@ public class MainActivity extends Activity {
         AddEditLocationDialogFragment.newInstance().show(getFragmentManager(), "addDialog");
     }
 
+    private Tab createTab(String title, LocationsFragment.Filter filter) {
+        Tab tab = actionBar.newTab()
+                .setText(title)
+                .setTabListener(new TabListener<LocationsFragment>(this, filter.name(), LocationsFragment.class));
+
+        return tab;
+    }
+
     public static class TabListener<T extends Fragment> implements ActionBar.TabListener {
-        private final Activity mActivity;
-        private final String mTag;
-        private final Class<T> mClass;
-        private Fragment mFragment;
+        private final Activity activity;
+        private final String tag;
+        private final Class<T> fragmentClass;
+        private Fragment fragment;
 
-        public TabListener(Activity activity, String tag, Class<T> clz) {
-            mActivity = activity;
-            mTag = tag;
-            mClass = clz;
+        public TabListener(Activity activity, String tag, Class<T> fragmentClass) {
+            this.activity = activity;
+            this.tag = tag;
+            this.fragmentClass = fragmentClass;
         }
 
-        public void onTabSelected(Tab tab, FragmentTransaction ft) {
-
-            if (mFragment == null) {
+        public void onTabSelected(Tab tab, FragmentTransaction fragmentTransaction) {
+            if (fragment == null) {
                 Bundle bundle = new Bundle();
-                bundle.putString("filter", mTag);
-                mFragment = Fragment.instantiate(mActivity, mClass.getName(), bundle);
-                ft.add(android.R.id.content, mFragment, mTag);
+                bundle.putString("filter", tag);
+                fragment = Fragment.instantiate(activity, fragmentClass.getName(), bundle);
+                fragmentTransaction.add(android.R.id.content, fragment, tag);
             } else {
-                ft.attach(mFragment);
+                fragmentTransaction.attach(fragment);
             }
         }
 
-        public void onTabUnselected(Tab tab, FragmentTransaction ft) {
-            if (mFragment != null) {
-                ft.detach(mFragment);
+        public void onTabUnselected(Tab tab, FragmentTransaction fragmentTransaction) {
+            if (fragment != null) {
+                fragmentTransaction.detach(fragment);
             }
-
         }
 
-        public void onTabReselected(Tab tab, FragmentTransaction ft) {
+        public void onTabReselected(Tab tab, FragmentTransaction fragmentTransaction) {
         }
     }
 }

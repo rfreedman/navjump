@@ -187,19 +187,19 @@ public class LocationsFragment extends Fragment implements LoaderManager.LoaderC
         Log.d(TAG, "onCreateLoader");
 
         String[] projection = null; // all columns
-        String selectionCritera = null;
+        String selectionCriteria = null;
         String[] selectionArgs = null;
         String sort = null;
 
         if(filter != null) {
             switch(filter) {
                 case favorites:
-                    selectionCritera = Locations.IS_FAVORITE + " > 0";
+                    selectionCriteria = Locations.IS_FAVORITE + " > 0";
                     sort = Locations.NAME + " asc ";
                     break;
 
                 case recent:
-                    selectionCritera = Locations.LAST_USED + " >= ?";
+                    selectionCriteria = Locations.LAST_USED + " >= ?";
                     selectionArgs = new String[1];
                     selectionArgs[0] = getRecentTimeThresholdAsString();
                     sort = Locations.LAST_USED + " desc";
@@ -215,7 +215,7 @@ public class LocationsFragment extends Fragment implements LoaderManager.LoaderC
                 getActivity(),
                 Locations.CONTENT_URI,
                 projection,
-                selectionCritera,
+                selectionCriteria,
                 selectionArgs,
                 sort
         );
@@ -227,9 +227,8 @@ public class LocationsFragment extends Fragment implements LoaderManager.LoaderC
         long DAY_IN_MS = 1000 * 60 * 60 * 24;
         long now = new Date().getTime();
 
-        // todo - get daysAgo from preferences
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String pref = prefs.getString("recent_threshold", "7");
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String pref = preferences.getString("recent_threshold", "7");
 
         int daysAgo = 7; // default value
 
@@ -246,12 +245,6 @@ public class LocationsFragment extends Fragment implements LoaderManager.LoaderC
 
     public void onLoadFinished(Loader<Cursor> loader, final Cursor cursor) {
         locationAdapter.swapCursor(cursor);
-
-        if(cursor == null) {
-            Log.d(TAG, "onLoadFinished - cursor is null");
-        } else {
-            Log.d(TAG, "onLoadFinished - cursor count: " + cursor.getCount());
-        }
     }
 
     @Override
