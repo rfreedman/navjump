@@ -148,6 +148,8 @@ public class LocationsFragment extends Fragment implements LoaderManager.LoaderC
         //
         }
 
+        setLocationUsed(viewHolder.id);
+
         if(latitude != 0.0 && longitude != 0.0) {
             navigate(latitude, longitude);
         } else {
@@ -179,6 +181,12 @@ public class LocationsFragment extends Fragment implements LoaderManager.LoaderC
 
     private void deleteLocation(long locationId) {
         getActivity().getContentResolver().delete(ContentUris.withAppendedId(Locations.CONTENT_URI, locationId), null, null);
+    }
+
+    private void setLocationUsed(long locationId) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Locations.LAST_USED, new Date().getTime());
+        getActivity().getContentResolver().update(ContentUris.withAppendedId(Locations.CONTENT_URI, locationId), contentValues, null, null);
     }
 
     @Override
