@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/Users/rfreedman/projects/navjump1/app/build/intermediates/incremental-classes/debug/classes.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="46234b33fce5902117ac0967df5c53941d0a5bc5">
+        <dex dex="/Users/rfreedman/projects/navjump1/app/build/intermediates/pre-dexed/debug/classes_2ed76cb8a83ad3e82caf05d673ec3a56c303d297.jar" />
+    </item>
+    <item
+        jar="/Users/rfreedman/projects/navjump1/app/build/intermediates/incremental-runtime-classes/debug/instant-run.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="f63be58779ef71476e4333c7d2b502fb626b8bff">
+        <dex dex="/Users/rfreedman/projects/navjump1/app/build/intermediates/pre-dexed/debug/instant-run_7c45b63084e6398f6da3874bcc03e2ed90aa7411.jar" />
+    </item>
+
+</items>
